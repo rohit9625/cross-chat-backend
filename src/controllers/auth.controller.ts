@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { ENV } from "../config/env";
 import { findUserByEmail, createUser } from "../data/user.repository";
+import { ApiErrorCode, AuthErrorCode } from "../utils/constants";
 
 /**
  * Generate a JWT access token
@@ -22,19 +23,28 @@ export async function register(req: Request, res: Response) {
     }
 
     if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({
+        code: AuthErrorCode.MISSING_FIELDS,
+        message: 'Missing required fields'
+      });
     }
 
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
-      return res.status(409).json({ message: 'User already exists' });
+      return res.status(409).json({
+        code: AuthErrorCode.USER_ALREADY_EXISTS,
+        message: 'User already exists'
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await createUser(email, name, hashedPassword);
     if (!user) {
-      return res.status(500).json({ message: 'Failed to register user' });
+      return res.status(500).json({
+        code: AuthErrorCode.USER_CREATION_FAILED,
+        message: 'Failed to create user',
+      });
     }
 
     return res.status(201).json({
@@ -46,8 +56,11 @@ export async function register(req: Request, res: Response) {
       },
     });
   } catch (err) {
-    console.error('Register error:', err);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error('[register] error:', err);
+    return res.status(500).json({
+      code: ApiErrorCode.INTERNAL_SERVER_ERROR,
+      message: 'Internal server error',
+    });
   }
 }
 
@@ -59,17 +72,26 @@ export async function login(req: Request, res: Response) {
     }
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({
+        code: AuthErrorCode.MISSING_FIELDS,
+        message: 'Missing required fields'
+      });
     }
 
     const user = await findUserByEmail(email);
     if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({
+        code: AuthErrorCode.INVALID_CREDENTIALS,
+        message: "Invalid email or password"
+      });
     }
 
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({
+        code: AuthErrorCode.INVALID_CREDENTIALS,
+        message: "Invalid email or password"
+      });
     }
 
     return res.json({
@@ -81,8 +103,11 @@ export async function login(req: Request, res: Response) {
       },
     });
   } catch (err) {
-    console.error('Login error:', err);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error('[login] error:', err);
+    return res.status(500).json({
+      code: ApiErrorCode.INTERNAL_SERVER_ERROR,
+      message: 'Internal server error',
+    });
   }
 }
 
