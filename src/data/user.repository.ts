@@ -44,6 +44,30 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 }
 
 /**
+ * Finds a user by their email address.
+ *
+ * @param email - Email address of the user to search for
+ * @param excludeUserId - ID of the current user who is searching
+ * @returns The matching {@link User} if found, otherwise `null`
+ */
+export async function searchUsersByEmail(
+  email: string,
+  excludeUserId: number
+): Promise<User[]> {
+  const { rows } = await pool.query<User>(
+    `
+    SELECT id, name, email
+    FROM users
+    WHERE email ILIKE $1
+      AND id != $2
+    LIMIT 10
+    `,
+    [`%${email}%`, excludeUserId]
+  );
+  return rows;
+}
+
+/**
  * Delete a user from the database
  * 
  * @param userId - ID of the user to be deleted
