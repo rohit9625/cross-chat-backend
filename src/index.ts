@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth.route";
 import userRoutes from "./routes/user.route";
+import chatRoutes from "./routes/chat.route";
 import { pool } from "./config/database";
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/chats", chatRoutes);
 
 async function startServer() {
   try {
