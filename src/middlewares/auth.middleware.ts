@@ -3,16 +3,17 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { ENV } from "../config/env";
 import { ApiErrorCode } from "../utils/constants";
 import { AuthRequest } from "../utils/types";
+import { failure } from "../utils/response";
 
 interface AccessTokenPayload extends JwtPayload {
   userId: number;
 }
 
 function unauthorized(res: Response, message = "Unauthorized") {
-  return res.status(401).json({
+  return failure(res, {
     code: ApiErrorCode.UNAUTHORIZED,
     message
-  });
+  }, 401)
 }
 
 export function requireAuth(
