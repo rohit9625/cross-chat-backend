@@ -62,7 +62,7 @@ export async function searchUsersByEmail(
       AND id != $2
     LIMIT 10
     `,
-    [`%${email}%`, excludeUserId]
+    [`${email}%`, excludeUserId]
   );
   return rows;
 }
