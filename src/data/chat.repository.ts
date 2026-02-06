@@ -150,6 +150,23 @@ export async function getChatMembers(chatId: number): Promise<ChatMember[]> {
   return rows;
 }
 
+export async function isUserChatMember(
+  userId: number,
+  chatId: number
+): Promise<boolean> {
+  const { rowCount } = await pool.query(
+    `
+    SELECT 1
+    FROM chat_members
+    WHERE user_id = $1 AND chat_id = $2
+    LIMIT 1
+    `,
+    [userId, chatId]
+  );
+
+  return !!rowCount;
+}
+
 export async function addChatMember(
   chatId: number,
   userId: number,

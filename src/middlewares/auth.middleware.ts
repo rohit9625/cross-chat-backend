@@ -43,8 +43,6 @@ export function socketAuthMiddleware(
     const token = socket.handshake.auth?.token ||
       socket.handshake.headers?.authorization?.replace("Bearer ", "");
 
-      console.log(`[socketAuthMiddleware] tokne: ${token}`)
-
     if (!token) {
       return next(new Error("Unauthorized"));
     }

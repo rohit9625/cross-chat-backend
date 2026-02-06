@@ -15,3 +15,22 @@ export async function getChatMessages(chatId: number): Promise<Message[]> {
   );
   return rows;
 }
+
+export async function createMessage(
+  chatId: number,
+  senderId: number,
+  content: string
+): Promise<Message | null> {
+  const {rows} = await pool.query<Message>(
+    `
+    INSERT INTO
+      messages (chat_id, sender_id, content)
+    VALUES
+      ($1, $2, $3)
+    RETURNING *
+    `,
+    [chatId, senderId, content]
+  );
+
+  return rows[0] ?? null;
+}

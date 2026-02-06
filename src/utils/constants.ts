@@ -24,3 +24,11 @@ export enum MemberRole {
   ADMIN = "ADMIN",
   MEMBER = "MEMBER",
 }
+
+export enum SocketEvent {
+  CONNECTION = "connection",
+  DISCONNECT = "disconnect",
+  SEND_MESSAGE = "send_message",
+  NEW_MESSAGE = "new_message",
+  JOIN_CHAT = "join_chat",
+}
