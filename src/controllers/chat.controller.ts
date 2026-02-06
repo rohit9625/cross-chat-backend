@@ -2,7 +2,8 @@ import { Response } from "express";
 import {
   getChatMembers,
   findOrCreateDirectChat,
-  getUserChatsWithMembers
+  getUserChatsWithMembers,
+  isUserChatMember
 } from "../data/chat.repository";
 import { ApiErrorCode, AuthErrorCode } from "../utils/constants";
 import { AuthRequest } from "../utils/types";
@@ -73,6 +74,38 @@ export async function getAllChats(req: AuthRequest, res: Response) {
     return success(res, {
       chats: chatsWithMessages,
     });
+  } catch (err) {
+    console.error('[listChats]', err);
+    return failure(res, {
+      code: ApiErrorCode.INTERNAL_SERVER_ERROR,
+      message: "Internal server error",
+    });
+  }
+}
+
+export async function getChatMessagesHandler(
+  req: AuthRequest,
+  res: Response
+) {
+  try {
+    const chatId = Number(req.params.chatId);
+
+    if (Number.isNaN(chatId)) {
+      return res.status(400).json({ message: "Invalid chatId" });
+    }
+
+    const isMember = await isUserChatMember(chatId, req.userId!);
+    if (!isMember) {
+      return failure(res, {
+        code: ApiErrorCode.FORBIDDEN,
+        message: "You are not a member of this chat",
+      }, 403);
+    }
+
+    const messages = await getChatMessages(chatId);
+
+    return success(res, { messages }, 200);
+
   } catch (err) {
     console.error('[listChats]', err);
     return failure(res, {
