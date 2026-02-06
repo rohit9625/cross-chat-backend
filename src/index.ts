@@ -1,17 +1,26 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { createServer } from "http";
 import authRoutes from "./routes/auth.route";
+import userRoutes from "./routes/user.route";
+import chatRoutes from "./routes/chat.route";
 import { pool } from "./config/database";
+import { initSocket } from "./socket";
 
 const app = express();
+const server = createServer(app);
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
+initSocket(server);
+
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/chats", chatRoutes);
 
 async function startServer() {
   try {
@@ -20,7 +29,7 @@ async function startServer() {
 
     console.log('Database connected successfully')
 
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
   } catch (err) {
@@ -31,6 +40,7 @@ async function startServer() {
 
 process.on('SIGINT', async () => {
   console.log('Shutting down...');
+  server.close();
   await pool.end();
   process.exit(0);
 })

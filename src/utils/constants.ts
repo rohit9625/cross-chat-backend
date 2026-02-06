@@ -12,4 +12,23 @@ export enum AuthErrorCode {
   INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
   USER_ALREADY_EXISTS = "USER_ALREADY_EXISTS",
   USER_CREATION_FAILED = "USER_CREATION_FAILED",
+  USER_NOT_FOUND = "USER_NOT_FOUND",
+}
+
+export enum ChatType {
+  DIRECT = "DIRECT",
+  GROUP = "GROUP",
+}
+
+export enum MemberRole {
+  ADMIN = "ADMIN",
+  MEMBER = "MEMBER",
+}
+
+export enum SocketEvent {
+  CONNECTION = "connection",
+  DISCONNECT = "disconnect",
+  SEND_MESSAGE = "send_message",
+  NEW_MESSAGE = "new_message",
+  JOIN_CHAT = "join_chat",
 }
