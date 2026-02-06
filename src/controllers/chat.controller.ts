@@ -8,6 +8,7 @@ import { ApiErrorCode, AuthErrorCode } from "../utils/constants";
 import { AuthRequest } from "../utils/types";
 import { findUserByEmail } from "../data/user.repository";
 import { failure, success } from "../utils/response";
+import { getChatMessages } from "../data/message.repository";
 
 export async function createDirectChat(req: AuthRequest, res: Response) {
   const userId = req.userId!;
@@ -43,6 +44,7 @@ export async function createDirectChat(req: AuthRequest, res: Response) {
     return success(res, {
       ...chat,
       members,
+      last_message: null,
     });
   } catch (err) {
     console.error('[createDirectChat]', err);
@@ -58,8 +60,18 @@ export async function getAllChats(req: AuthRequest, res: Response) {
     const userId = req.userId!;
     const chats = await getUserChatsWithMembers(userId);
 
+    const chatsWithMessages = await Promise.all(
+      chats.map(async (chat) => {
+        const messages = await getChatMessages(chat.id);
+        return {
+          ...chat,
+          last_message: messages[0] ?? null,
+        };
+      })
+    );
+
     return success(res, {
-    chats,
+      chats: chatsWithMessages,
     });
   } catch (err) {
     console.error('[listChats]', err);
