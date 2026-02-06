@@ -1,13 +1,9 @@
 import { Response, NextFunction } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
-import { ENV } from "../config/env";
 import { ApiErrorCode } from "../utils/constants";
-import { AuthRequest } from "../utils/types";
+import { AuthRequest, AuthSocket } from "../utils/types";
 import { failure } from "../utils/response";
-
-interface AccessTokenPayload extends JwtPayload {
-  userId: number;
-}
+import { verifyAccessToken } from "../utils/auth.util";
+import { ExtendedError } from "socket.io";
 
 function unauthorized(res: Response, message = "Unauthorized") {
   return failure(res, {
@@ -30,18 +26,36 @@ export function requireAuth(
   const token = authHeader.slice("Bearer ".length).trim();
 
   try {
-    const payload = jwt.verify(
-      token,
-      ENV.JWT_SECRET
-    ) as AccessTokenPayload;
-
-    if (!payload.userId) {
-      return unauthorized(res, "Invalid token payload");
-    }
+    const payload = verifyAccessToken(token);
 
     req.userId = payload.userId;
     return next();
   } catch (err) {
     return unauthorized(res, "Invalid or expired token");
+  }
+}
+
+export function socketAuthMiddleware(
+  socket: AuthSocket,
+  next: (err?: ExtendedError) => void
+) {
+  try {
+    const token = socket.handshake.auth?.token ||
+      socket.handshake.headers?.authorization?.replace("Bearer ", "");
+
+      console.log(`[socketAuthMiddleware] tokne: ${token}`)
+
+    if (!token) {
+      return next(new Error("Unauthorized"));
+    }
+
+    const payload = verifyAccessToken(token);
+
+    socket.userId = payload.userId;
+
+    next();
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error("Authentication failed");
+    next(error);
   }
 }
