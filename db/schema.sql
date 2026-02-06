@@ -1,6 +1,6 @@
 \restrict dbmate
 
--- Dumped from database version 18.1 (Homebrew)
+-- Dumped from database version 17.7 (bdd1736)
 -- Dumped by pg_dump version 18.1 (Homebrew)
 
 SET statement_timeout = 0;
@@ -14,20 +14,6 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
-
---
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON SCHEMA public IS '';
-
 
 SET default_tablespace = '';
 
