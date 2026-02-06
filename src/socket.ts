@@ -12,7 +12,7 @@ export function initSocket(server: any) {
 
   io.use(socketAuthMiddleware);
 
-  io.on("connection", (socket: AuthSocket) => {
+  io.on(SocketEvent.CONNECTION, (socket: AuthSocket) => {
 
     socket.on(SocketEvent.SEND_MESSAGE, async (
       payload: MessagePayload,
@@ -46,7 +46,7 @@ export function initSocket(server: any) {
         const message = await createMessage(chat_id, userId, text.trim());
 
         if (!message) {
-          throw new Error("Internal");
+          throw new Error("Internal server error");
         }
 
         socket.nsp
@@ -56,6 +56,7 @@ export function initSocket(server: any) {
 
         ack?.({ success: true, message });
       } catch (err: any) {
+        console.error(`[${SocketEvent.SEND_MESSAGE}]`, err);
         ack?.({
           success: false,
           error: err.message ?? "Failed to send message",
