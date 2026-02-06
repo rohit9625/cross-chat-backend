@@ -1,8 +1,8 @@
 import { Response } from "express";
 import {
-  getUserChats,
   getChatMembers,
-  findOrCreateDirectChat
+  findOrCreateDirectChat,
+  getUserChatsWithMembers
 } from "../data/chat.repository";
 import { ApiErrorCode, AuthErrorCode } from "../utils/constants";
 import { AuthRequest } from "../utils/types";
@@ -41,7 +41,7 @@ export async function createDirectChat(req: AuthRequest, res: Response) {
     const members = await getChatMembers(chat!.id);
 
     return success(res, {
-      chat,
+      ...chat,
       members,
     });
   } catch (err) {
@@ -56,10 +56,10 @@ export async function createDirectChat(req: AuthRequest, res: Response) {
 export async function getAllChats(req: AuthRequest, res: Response) {
   try {
     const userId = req.userId!;
-    const chats = await getUserChats(userId);
+    const chats = await getUserChatsWithMembers(userId);
 
     return success(res, {
-      chats,
+    chats,
     });
   } catch (err) {
     console.error('[listChats]', err);

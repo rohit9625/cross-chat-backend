@@ -1,16 +1,22 @@
 import { ChatType, MemberRole } from "../utils/constants";
 
 export interface Chat {
-    id: number;
-    type: ChatType;
-    last_message_at: string;
-    created_at: string;
+  id: number;
+  type: ChatType;
+  last_message_at: string;
+  created_at: string;
 }
 
 export interface ChatMember {
-    id: number;
-    type: MemberRole;
-    chat_id: number;
-    user_id: number;
-    joined_at: string;
+  userId: number;
+  name: string;
+  email: string;
+}
+
+export interface ChatWithMembers {
+  id: number;
+  name: string;
+  last_message_at: string;
+  created_at: string;
+  members: ChatMember[];
 }

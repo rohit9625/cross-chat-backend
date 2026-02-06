@@ -1,5 +1,5 @@
 import { pool } from "../config/database";
-import { Chat, ChatMember } from "../models/chat.model";
+import { Chat, ChatMember, ChatWithMembers } from "../models/chat.model";
 import { ChatType, MemberRole } from "../utils/constants";
 
 export async function findOrCreateDirectChat(
@@ -95,12 +95,55 @@ export async function getUserChats(userId: number): Promise<Chat[] | null> {
   return rows;
 }
 
+export async function getUserChatsWithMembers(userId: number): Promise<ChatWithMembers[]> {
+  const { rows } = await pool.query<ChatWithMembers>(
+    `
+    SELECT
+      c.id,
+      c.type,
+      c.last_message_at,
+      c.created_at,
+
+      json_agg(
+        json_build_object(
+          'user_id', u.id,
+          'name', u.name,
+          'email', u.email
+        )
+        ORDER BY u.name
+      ) AS members
+
+    FROM chats c
+    JOIN chat_members cm_self
+      ON cm_self.chat_id = c.id
+      AND cm_self.user_id = $1
+
+    JOIN chat_members cm_all
+      ON cm_all.chat_id = c.id
+
+    JOIN users u
+      ON u.id = cm_all.user_id
+
+    GROUP BY c.id
+    ORDER BY c.last_message_at DESC
+    `,
+    [userId]
+  );
+
+  return rows;
+}
+
 export async function getChatMembers(chatId: number): Promise<ChatMember[]> {
   const { rows } = await pool.query<ChatMember>(
     `
-    SELECT *
-    FROM chat_members
-    WHERE chat_id = $1
+    SELECT
+      u.id as user_id,
+      u.name,
+      u.email
+    FROM chat_members cm
+    JOIN users u
+      ON cm.user_id = u.id
+      AND cm.chat_id = $1
     `,
     [chatId]
   );
