@@ -183,3 +183,17 @@ export async function addChatMember(
 
   return rows[0] ?? null;
 }
+
+export async function updateChatLastMessageAt(
+  chatId: number,
+  timestamp: string,
+): Promise<void> {
+  await pool.query(
+    `
+    UPDATE chats
+    SET last_message_at = $2
+    WHERE id = $1
+    `,
+    [chatId, timestamp]
+  );
+}

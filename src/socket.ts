@@ -3,7 +3,7 @@ import { socketAuthMiddleware } from "./middlewares/auth.middleware";
 import { AuthSocket, MessagePayload } from "./utils/types";
 import { SocketEvent } from "./utils/constants";
 import { createMessage } from "./data/message.repository";
-import { isUserChatMember } from "./data/chat.repository";
+import { isUserChatMember, updateChatLastMessageAt } from "./data/chat.repository";
 
 export function initSocket(server: any) {
   const io = new Server(server, {
@@ -49,6 +49,8 @@ export function initSocket(server: any) {
           throw new Error("Internal server error");
         }
 
+        await updateChatLastMessageAt(chat_id, message.created_at);
+
         socket.nsp
           .to(`chat:${chat_id}`)
           .emit(SocketEvent.NEW_MESSAGE, message);
@@ -70,7 +72,7 @@ export function initSocket(server: any) {
     });
 
     socket.on(SocketEvent.DISCONNECT, () => {
-      console.log(`[${SocketEvent.DISCONNECT}] client disconnected`);
+      // TODO("Update online status of user")
     });
   });
 
