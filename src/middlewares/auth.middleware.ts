@@ -60,6 +60,7 @@ export async function socketAuthMiddleware(
     next();
   } catch (err) {
     const error = err instanceof Error ? err : new Error("Authentication failed");
+    console.error(`[middleware] Authentication failed`, err);
     next(error);
   }
 }
