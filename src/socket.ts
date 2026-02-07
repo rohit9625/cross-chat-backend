@@ -2,13 +2,17 @@ import { Server } from "socket.io";
 import { socketAuthMiddleware } from "./middlewares/auth.middleware";
 import { AuthSocket, MessagePayload } from "./utils/types";
 import { SocketEvent } from "./utils/constants";
-import { createMessage } from "./data/message.repository";
-import { isUserChatMember, updateChatLastMessageAt } from "./data/chat.repository";
+import { createMessage, updateMessage } from "./data/message.repository";
+import { getChatMembers, isUserChatMember, updateChatLastMessageAt } from "./data/chat.repository";
+import { initSocketEmitter } from "./utils/socket.util";
+import { enqueueTranslationJob } from "./data/translation.repository";
 
 export function initSocket(server: any) {
   const io = new Server(server, {
     connectionStateRecovery: {}
   });
+
+  initSocketEmitter(io);
 
   io.use(socketAuthMiddleware);
 
@@ -24,7 +28,10 @@ export function initSocket(server: any) {
     ) => {
       try {
         const userId = socket.userId;
+        const sourceLanguage = socket.preferredLanguage!;
         const { chat_id, text } = payload;
+        // This should come from user preference/settings
+        const autoTranslateEnabled = true; // temporarily true
 
         if (!userId) {
           throw new Error("Unauthorized");
@@ -47,6 +54,32 @@ export function initSocket(server: any) {
 
         if (!message) {
           throw new Error("Internal server error");
+        }
+
+        if (autoTranslateEnabled) {
+          await updateMessage(message.id, {
+            auto_translate: true,
+            translation_status: "PENDING",
+          });
+
+          const members = await getChatMembers(chat_id);
+          const languages = new Set(
+            members
+              .map(m => m.preferred_language)
+              .filter(Boolean)
+          );
+
+          for (const lang of languages) {
+            if (lang === sourceLanguage) continue;
+
+            await enqueueTranslationJob({
+              message_id: message.id,
+              chat_id,
+              source_language: sourceLanguage,
+              target_language: lang ?? "en",
+              text: text.trim(),
+            });
+          }
         }
 
         await updateChatLastMessageAt(chat_id, message.created_at);

@@ -11,6 +11,7 @@ export interface ChatMember {
   userId: number;
   name: string;
   email: string;
+  preferred_language?: string;
 }
 
 export interface ChatWithMembers {

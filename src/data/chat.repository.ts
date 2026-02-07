@@ -139,7 +139,8 @@ export async function getChatMembers(chatId: number): Promise<ChatMember[]> {
     SELECT
       u.id as user_id,
       u.name,
-      u.email
+      u.email,
+      u.preferred_language
     FROM chat_members cm
     JOIN users u
       ON cm.user_id = u.id
