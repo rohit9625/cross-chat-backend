@@ -4,6 +4,7 @@ import { AuthRequest, AuthSocket } from "../utils/types";
 import { failure } from "../utils/response";
 import { verifyAccessToken } from "../utils/auth.util";
 import { ExtendedError } from "socket.io";
+import { findUserById } from "../data/user.repository";
 
 function unauthorized(res: Response, message = "Unauthorized") {
   return failure(res, {
@@ -35,7 +36,7 @@ export function requireAuth(
   }
 }
 
-export function socketAuthMiddleware(
+export async function socketAuthMiddleware(
   socket: AuthSocket,
   next: (err?: ExtendedError) => void
 ) {
@@ -48,8 +49,13 @@ export function socketAuthMiddleware(
     }
 
     const payload = verifyAccessToken(token);
+    const user = await findUserById(payload.userId);
+    if (!user) {
+      return next(new Error("User not found"));
+    }
 
     socket.userId = payload.userId;
+    socket.preferredLanguage = user.preferred_language ?? "en";
 
     next();
   } catch (err) {

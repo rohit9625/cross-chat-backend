@@ -8,6 +8,7 @@ export interface AuthRequest extends Request {
 
 export interface AuthSocket extends Socket {
   userId?: number;
+  preferredLanguage?: string;
 }
 
 export interface ErrorPayload {
