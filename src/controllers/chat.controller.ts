@@ -94,7 +94,7 @@ export async function getChatMessagesHandler(
       return res.status(400).json({ message: "Invalid chatId" });
     }
 
-    const isMember = await isUserChatMember(chatId, req.userId!);
+    const isMember = await isUserChatMember(req.userId!, chatId);
     if (!isMember) {
       return failure(res, {
         code: ApiErrorCode.FORBIDDEN,
