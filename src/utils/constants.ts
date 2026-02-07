@@ -30,5 +30,6 @@ export enum SocketEvent {
   DISCONNECT = "disconnect",
   SEND_MESSAGE = "send_message",
   NEW_MESSAGE = "new_message",
+  MESSAGE_TRANSLATED = "message_translated",
   JOIN_CHAT = "join_chat",
 }
