@@ -4,6 +4,11 @@ import { Message, MessageTranslation } from "../models/message.model";
 type MessageWithSender = Message & {
   sender_name: string | null;
 };
+type MessageWithTranslation = Message & {
+  sender_name: string | null;
+  translated_text: string | null;
+  translated_language: string | null;
+};
 
 type MessageUpdate = Partial<
   Pick<
@@ -94,6 +99,32 @@ export async function getChatMessageById(messageId: number): Promise<Message | n
     [messageId]
   );
   return rows[0] ?? null;
+}
+
+export async function getChatMessagesWithTranslation(
+  chatId: number,
+  language: string
+): Promise<MessageWithTranslation[]> {
+  const { rows } = await pool.query<MessageWithTranslation>(
+    `
+    SELECT
+      m.*,
+      u.name AS sender_name,
+      mt.translated_text,
+      mt.language AS translated_language
+    FROM messages m
+    LEFT JOIN users u
+      ON u.id = m.sender_id
+    LEFT JOIN message_translations mt
+      ON mt.message_id = m.id
+     AND mt.language = $2
+    WHERE m.chat_id = $1
+    ORDER BY m.created_at DESC
+    `,
+    [chatId, language]
+  );
+
+  return rows;
 }
 
 /**

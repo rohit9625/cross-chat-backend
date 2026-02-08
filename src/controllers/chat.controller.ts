@@ -9,7 +9,7 @@ import { ApiErrorCode, AuthErrorCode } from "../utils/constants";
 import { AuthRequest } from "../utils/types";
 import { findUserByEmail } from "../data/user.repository";
 import { failure, success } from "../utils/response";
-import { getChatMessages } from "../data/message.repository";
+import { getChatMessages, getChatMessagesWithTranslation} from "../data/message.repository";
 
 export async function createDirectChat(req: AuthRequest, res: Response) {
   const userId = req.userId!;
@@ -89,6 +89,7 @@ export async function getChatMessagesHandler(
 ) {
   try {
     const chatId = Number(req.params.chatId);
+    const preferredLanguage = req.preferredLanguage ?? "en"; // Default to english
 
     if (Number.isNaN(chatId)) {
       return res.status(400).json({ message: "Invalid chatId" });
@@ -102,7 +103,7 @@ export async function getChatMessagesHandler(
       }, 403);
     }
 
-    const messages = await getChatMessages(chatId);
+    const messages = await getChatMessagesWithTranslation(chatId, preferredLanguage);
 
     return success(res, { messages }, 200);
 

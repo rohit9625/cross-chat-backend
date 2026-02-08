@@ -13,7 +13,7 @@ function unauthorized(res: Response, message = "Unauthorized") {
   }, 401)
 }
 
-export function requireAuth(
+export async function requireAuth(
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -28,8 +28,14 @@ export function requireAuth(
 
   try {
     const payload = verifyAccessToken(token);
+    const user = await findUserById(payload.userId);
+
+    if (!user) {
+      return next(new Error("User not found"));
+    }
 
     req.userId = payload.userId;
+    req.preferredLanguage = user.preferred_language ?? "en";
     return next();
   } catch (err) {
     return unauthorized(res, "Invalid or expired token");
