@@ -53,6 +53,7 @@ export async function register(req: Request, res: Response) {
         id: user.id,
         name: user.name,
         email: user.email,
+        preferred_language: user.preferred_language,
       },
     });
   } catch (err) {
@@ -100,6 +101,7 @@ export async function login(req: Request, res: Response) {
         id: user.id,
         name: user.name,
         email: user.email,
+        preferred_language: user.preferred_language,
       },
     });
   } catch (err) {
