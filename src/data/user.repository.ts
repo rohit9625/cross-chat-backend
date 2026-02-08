@@ -44,6 +44,21 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 }
 
 /**
+ * Finds a user by it's id address.
+ *
+ * @param userId - id of the user to search for
+ * @returns The matching {@link User} if found, otherwise `null`
+ */
+export async function findUserById(userId: number): Promise<User | null> {
+  const { rows } = await pool.query<User>(
+    `SELECT * FROM users WHERE id = $1`,
+    [userId]
+  )
+
+  return rows[0] ?? null;
+}
+
+/**
  * Finds a user by their email address.
  *
  * @param email - Email address of the user to search for

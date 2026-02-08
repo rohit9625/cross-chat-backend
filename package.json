@@ -19,6 +19,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "jsonwebtoken": "^9.0.3",
+    "lingo.dev": "^0.131.1",
     "pg": "^8.18.0",
     "socket.io": "^4.8.3"
   },

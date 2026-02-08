@@ -4,6 +4,7 @@ import { AuthRequest, AuthSocket } from "../utils/types";
 import { failure } from "../utils/response";
 import { verifyAccessToken } from "../utils/auth.util";
 import { ExtendedError } from "socket.io";
+import { findUserById } from "../data/user.repository";
 
 function unauthorized(res: Response, message = "Unauthorized") {
   return failure(res, {
@@ -12,7 +13,7 @@ function unauthorized(res: Response, message = "Unauthorized") {
   }, 401)
 }
 
-export function requireAuth(
+export async function requireAuth(
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -27,15 +28,21 @@ export function requireAuth(
 
   try {
     const payload = verifyAccessToken(token);
+    const user = await findUserById(payload.userId);
+
+    if (!user) {
+      return next(new Error("User not found"));
+    }
 
     req.userId = payload.userId;
+    req.preferredLanguage = user.preferred_language ?? "en";
     return next();
   } catch (err) {
     return unauthorized(res, "Invalid or expired token");
   }
 }
 
-export function socketAuthMiddleware(
+export async function socketAuthMiddleware(
   socket: AuthSocket,
   next: (err?: ExtendedError) => void
 ) {
@@ -48,12 +55,18 @@ export function socketAuthMiddleware(
     }
 
     const payload = verifyAccessToken(token);
+    const user = await findUserById(payload.userId);
+    if (!user) {
+      return next(new Error("User not found"));
+    }
 
     socket.userId = payload.userId;
+    socket.preferredLanguage = user.preferred_language ?? "en";
 
     next();
   } catch (err) {
     const error = err instanceof Error ? err : new Error("Authentication failed");
+    console.error(`[middleware] Authentication failed`, err);
     next(error);
   }
 }

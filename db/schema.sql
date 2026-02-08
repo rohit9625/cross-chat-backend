@@ -15,6 +15,19 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: translation_state; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.translation_state AS ENUM (
+    'IDLE',
+    'PENDING',
+    'PROCESSING',
+    'COMPLETED',
+    'FAILED'
+);
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -129,7 +142,11 @@ CREATE TABLE public.messages (
     chat_id integer,
     sender_id integer,
     content text NOT NULL,
-    created_at timestamp without time zone DEFAULT now()
+    created_at timestamp without time zone DEFAULT now(),
+    auto_translate boolean DEFAULT false NOT NULL,
+    translation_status public.translation_state DEFAULT 'IDLE'::public.translation_state NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT messages_translation_state_guard CHECK (((auto_translate = true) OR (translation_status = 'IDLE'::public.translation_state)))
 );
 
 
@@ -160,6 +177,46 @@ ALTER SEQUENCE public.messages_id_seq OWNED BY public.messages.id;
 CREATE TABLE public.schema_migrations (
     version character varying NOT NULL
 );
+
+
+--
+-- Name: translation_jobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.translation_jobs (
+    id bigint NOT NULL,
+    message_id bigint NOT NULL,
+    chat_id bigint NOT NULL,
+    source_language text NOT NULL,
+    target_language text NOT NULL,
+    text text NOT NULL,
+    status text DEFAULT 'PENDING'::text NOT NULL,
+    attempt integer DEFAULT 0 NOT NULL,
+    max_attempts integer DEFAULT 3 NOT NULL,
+    locked_at timestamp without time zone,
+    last_error text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: translation_jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.translation_jobs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: translation_jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.translation_jobs_id_seq OWNED BY public.translation_jobs.id;
 
 
 --
@@ -222,6 +279,13 @@ ALTER TABLE ONLY public.message_translations ALTER COLUMN id SET DEFAULT nextval
 --
 
 ALTER TABLE ONLY public.messages ALTER COLUMN id SET DEFAULT nextval('public.messages_id_seq'::regclass);
+
+
+--
+-- Name: translation_jobs id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_jobs ALTER COLUMN id SET DEFAULT nextval('public.translation_jobs_id_seq'::regclass);
 
 
 --
@@ -288,6 +352,22 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: translation_jobs translation_jobs_message_id_target_language_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_jobs
+    ADD CONSTRAINT translation_jobs_message_id_target_language_key UNIQUE (message_id, target_language);
+
+
+--
+-- Name: translation_jobs translation_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_jobs
+    ADD CONSTRAINT translation_jobs_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -308,6 +388,13 @@ ALTER TABLE ONLY public.users
 --
 
 CREATE INDEX idx_messages_chat_created ON public.messages USING btree (chat_id, created_at);
+
+
+--
+-- Name: idx_translation_jobs_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_translation_jobs_status ON public.translation_jobs USING btree (status, locked_at);
 
 
 --
@@ -351,6 +438,22 @@ ALTER TABLE ONLY public.messages
 
 
 --
+-- Name: translation_jobs translation_jobs_chat_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_jobs
+    ADD CONSTRAINT translation_jobs_chat_id_fkey FOREIGN KEY (chat_id) REFERENCES public.chats(id) ON DELETE CASCADE;
+
+
+--
+-- Name: translation_jobs translation_jobs_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_jobs
+    ADD CONSTRAINT translation_jobs_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.messages(id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
@@ -366,4 +469,6 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260205094521'),
     ('20260205094617'),
     ('20260205094655'),
-    ('20260205094709');
+    ('20260205094709'),
+    ('20260207140244'),
+    ('20260207141745');
