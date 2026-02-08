@@ -20,7 +20,7 @@ export async function createUser(
     `
     INSERT INTO users (email, name, password)
     VALUES ($1, $2, $3)
-    RETURNING id, email, name, created_at AS "createdAt"
+    RETURNING id, email, name, preferred_language, created_at AS "createdAt"
     `,
     [email, name, password]
   );
@@ -71,7 +71,7 @@ export async function searchUsersByEmail(
 ): Promise<User[]> {
   const { rows } = await pool.query<User>(
     `
-    SELECT id, name, email
+    SELECT id, name, email, preferred_language
     FROM users
     WHERE email ILIKE $1
       AND id != $2
