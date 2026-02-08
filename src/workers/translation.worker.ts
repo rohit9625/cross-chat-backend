@@ -25,24 +25,20 @@ export async function startTranslationWorker() {
   }
 
   workerRunning = true;
-  console.log("[startTranslationWorker] Translation worker starting...");
 
   listenClient = await pool.connect();
 
   await listenClient.query("LISTEN translation_jobs");
-  console.log("[startTranslationWorker] Listening for translation_jobs notifications");
 
   // Handle notifications
   listenClient.on("notification", async () => {
     if (!workerRunning) return;
 
-    console.log("[startTranslationWorker#notification] notification event received");
     try {
       let job;
 
       // Drain all available jobs
       while ((job = await claimNextTranslationJob())) {
-        console.log(`[startTranslationWorker#notification] processing message_id: ${job.message_id}`);
         await processTranslationJob(job);
       }
     } catch (err) {
@@ -54,11 +50,8 @@ export async function startTranslationWorker() {
   pollingTimer = setInterval(async () => {
     if (!workerRunning) return;
 
-    console.log("[startTranslationWorker#setInterval] Claiming next translation job");
-
     let job;
     while ((job = await claimNextTranslationJob())) {
-      console.log(`[startTranslationWorker#setInterval] processing message_id: ${job.message_id}`);
       await processTranslationJob(job);
     }
   }, 5000);
@@ -68,7 +61,6 @@ export async function startTranslationWorker() {
  * Stops the translation worker and releases resources.
  */
 export async function stopTranslationWorker() {
-  console.log("[stopTranslationWorker] Stopping translation worker...");
   workerRunning = false;
 
   if (pollingTimer) {
@@ -101,20 +93,16 @@ export async function processTranslationJob(job: TranslationJob) {
       fast: true, // Prefer speed over quality temporarily
     });
 
-    console.log(`[processTranslationJob] Original text: ${job.text}, Translated text: ${translated}`);
-
     await saveMessageTranslation(
       job.message_id,
       job.target_language,
       translated,
     );
 
-    console.log(`[processTranslationJob] Updating translation job: ${job.id}`);
     await updateTranslationJob(job.id, {
       status: TranslationJobStatus.COMPLETED,
     });
 
-    console.log(`[processTranslationJob] Emitting to chat: ${job.chat_id}`);
     await updateMessage(job.message_id, {
       translation_status: "COMPLETED",
     });
@@ -133,7 +121,7 @@ export async function processTranslationJob(job: TranslationJob) {
       });
     }
 
-    console.log(`[processTranslationJob] Error processing translation job: ${job.id}`, err);
+    console.error(`[processTranslationJob] Error processing translation job: ${job.id}`, err);
     await updateTranslationJob(job.id, {
       status: failed ? TranslationJobStatus.FAILED : TranslationJobStatus.PENDING,
       last_error: err.message ?? null,

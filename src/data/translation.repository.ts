@@ -58,10 +58,8 @@ export async function enqueueTranslationJob(
     [message_id, chat_id, source_language, target_language, text]
   );
 
-  console.log(`[enqueueTranslationJob] job enqueued for message_id=${message_id}`);
 
   if (rowCount && rowCount > 0) {
-    console.log(`[enqueueTranslationJob] Notifying to translation_jobs channel`);
     await pool.query(`NOTIFY translation_jobs`);
   }
 }
@@ -76,7 +74,6 @@ export async function enqueueTranslationJob(
  * @returns Claimed job or null if none available
  */
 export async function claimNextTranslationJob(): Promise<TranslationJob | null> {
-  console.log(`[claimNextTranslationJob] claiming translation_jobs`);
   const { rows } = await pool.query<TranslationJob>(
     `
     UPDATE translation_jobs
