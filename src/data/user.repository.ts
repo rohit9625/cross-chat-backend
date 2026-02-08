@@ -82,6 +82,28 @@ export async function searchUsersByEmail(
   return rows;
 }
 
+export async function updateUserPreferredLanguage(
+  userId: number,
+  preferredLanguage: string
+): Promise<User | null> {
+  const { rows } = await pool.query<User>(
+    `
+    UPDATE users
+    SET preferred_language = $2
+    WHERE id = $1
+    RETURNING
+      id,
+      email,
+      name,
+      preferred_language,
+      created_at
+    `,
+    [userId, preferredLanguage]
+  );
+
+  return rows[0] ?? null;
+}
+
 /**
  * Delete a user from the database
  * 
